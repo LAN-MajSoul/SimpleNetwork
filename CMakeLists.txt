@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 project(SimpleNetwork VERSION 0.1.0 LANGUAGES C CXX)
 
-add_subdirectory(./library/spdlog)
+add_subdirectory(./extern/spdlog)
 if(NOT TARGET spdlog)
     # Stand-alone build
     find_package(spdlog REQUIRED)
