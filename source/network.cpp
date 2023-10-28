@@ -1,5 +1,4 @@
 #include "network.hpp"
-#include "logger.hpp"
 #include "network_base.hpp"
 
 #include <cstdint>
@@ -24,7 +23,7 @@ auto NetworkHoster::getVerify(const NetworkMessage &msg) -> uint8_t {
 }
 
 auto DefaultUserProc(NetworkMessagePackage msgPkg) -> uint32_t {
-	logger.debug("data: \"", msgPkg.data.data, "\"");
+	spdlog::debug("data: \"", msgPkg.data.data, "\"");
 	return 0;
 }
 
@@ -32,8 +31,8 @@ auto NetworkServer::serverProc(NetworkMessagePackage msgPkg) -> uint32_t {
 	switch (msgPkg.data.type) {
 	case NetworkMessage::nulltype:
 	case NetworkMessage::connectRequest:
-		logger.debug(contextInfo, "New Connect Request from ",
-					 msgPkg.addr.addr, ":", msgPkg.addr.port);
+		spdlog::debug("New Connect Request from {}:{0:d}", msgPkg.addr.addr,
+					  msgPkg.addr.port);
 		[this, msgPkg] {
 			struct NetworkMessage msg;
 			memset(&msg, 0, sizeof(msg));
@@ -45,24 +44,24 @@ auto NetworkServer::serverProc(NetworkMessagePackage msgPkg) -> uint32_t {
 		}();
 		break;
 	case NetworkMessage::connectConfirm:
-		logger.debug(contextInfo, "Connect Confirmed from ", msgPkg.addr.addr,
-					 ":", msgPkg.addr.port);
+		spdlog::debug("Connect Confirmed from {}:{0:d}", msgPkg.addr.addr,
+					  msgPkg.addr.port);
 		sessions.insert(msgPkg.addr);
 		break;
 	case NetworkMessage::dataGetRequest:
-		logger.debug(contextInfo, "New DataGet Request from ",
-					 msgPkg.addr.addr, ":", msgPkg.addr.port);
+		spdlog::debug("New DataGet Request from {}:{0:d}", msgPkg.addr.addr,
+					  msgPkg.addr.port);
 		if (sessions.count(msgPkg.addr) == 0) {
-			logger.warn("Unconfirmed Request, Ingnored");
+			spdlog::warn("Unconfirmed Request, Ingnored");
 			break;
 		}
 		UserProc(msgPkg);
 		break;
 	case NetworkMessage::dataPostRequest:
-		logger.debug(contextInfo, "New DataPost Request from ",
-					 msgPkg.addr.addr, ":", msgPkg.addr.port);
+		spdlog::debug("New DataPost Request from {}:{0:d}", msgPkg.addr.addr,
+					  msgPkg.addr.port);
 		if (sessions.count(msgPkg.addr) == 0) {
-			logger.warn("Unconfirmed Request, Ingnored");
+			spdlog::warn("Unconfirmed Request, Ingnored");
 			break;
 		}
 		[this, msgPkg] {
@@ -76,10 +75,10 @@ auto NetworkServer::serverProc(NetworkMessagePackage msgPkg) -> uint32_t {
 		}();
 		break;
 	case NetworkMessage::dataPackage:
-		logger.debug(contextInfo, "New DataPackage Request from ",
-					 msgPkg.addr.addr, ":", msgPkg.addr.port);
+		spdlog::debug("New DataPackage Request from {}:{0:d}",
+					  msgPkg.addr.addr, msgPkg.addr.port);
 		if (sessions.count(msgPkg.addr) == 0) {
-			logger.warn("Unconfirmed Request, Ingnored");
+			spdlog::warn("Unconfirmed Request, Ingnored");
 			break;
 		}
 		[this, msgPkg] {
@@ -101,8 +100,8 @@ auto NetworkServer::serverProc(NetworkMessagePackage msgPkg) -> uint32_t {
 	case NetworkMessage::closeEndup:
 		break;
 	default:
-		logger.warn(contextInfo, "Unexcept message type (", msgPkg.data.type,
-					") from ", msgPkg.addr.addr, ":", msgPkg.addr.port);
+		spdlog::warn("Unexcept message type ({0:d}) from {}:{0:d}",
+					 msgPkg.data.type, msgPkg.addr.addr, msgPkg.addr.port);
 		break;
 	}
 	return 0;
@@ -123,9 +122,8 @@ void NetworkServer::waitMessage() {
 							sizeof(msgPkg.data), &msgPkg.size, &msgPkg.addr);
 	} while (state < 0 || getVerify(msgPkg.data) != msgPkg.data.verify);
 	msgQueue.emplace(msgPkg);
-	logger.debug(contextInfo, "msgPkg [", msgPkg.data.type, ",",
-				 msgPkg.addr.addr, ",", msgPkg.addr.port,
-				 "] has been emplaced MsgQueue.");
+	spdlog::debug("msgPkg [{},{},{}] has been emplaced MsgQueue.",
+				  msgPkg.data.type, msgPkg.addr.addr, msgPkg.addr.port);
 }
 
 void NetworkClient::connect(const char *server, uint32_t port) {
@@ -140,8 +138,8 @@ void NetworkClient::connect(const char *server, uint32_t port) {
 	addr.port = port;
 	int32_t state;
 	do {
-		logger.debug(contextInfo, "Try to connect server at ", server, ":",
-					 port, " Msg [", msg.type, "]");
+		spdlog::debug("Try to connect server at {}:{}, Msg [{},{}]", server,
+					  port, msg.type);
 		sendMessageTo(&addr, reinterpret_cast<const char *>(&msg),
 					  sizeof(msg));
 		state = recvMessage(reinterpret_cast<char *>(&rmsg), sizeof(rmsg));
@@ -165,8 +163,7 @@ void NetworkClient::send(const char *str, uint32_t size) {
 	struct NetworkAddr addr = session;
 	int32_t state;
 	do {
-		logger.debug(contextInfo, "Try to Post Data to Server, Msg [",
-					 msg.type, "]");
+		spdlog::debug("Try to Post Data to Server, Msg [{}]", msg.type);
 		sendMessageTo(&addr, reinterpret_cast<const char *>(&msg),
 					  sizeof(msg));
 		state = recvMessage(reinterpret_cast<char *>(&rmsg), sizeof(rmsg));
@@ -179,8 +176,7 @@ void NetworkClient::send(const char *str, uint32_t size) {
 	memcpy(msg.data, str, size);
 	msg.verify = getVerify(msg);
 	do {
-		logger.debug(contextInfo, "Send DataPackage to Server, Msg [",
-					 msg.type, "]");
+		spdlog::debug("Send DataPackage to Server, Msg [{}]", msg.type);
 		sendMessageTo(&addr, reinterpret_cast<const char *>(&msg),
 					  sizeof(msg));
 		state = recvMessage(reinterpret_cast<char *>(&rmsg), sizeof(rmsg));

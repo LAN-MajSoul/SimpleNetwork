@@ -1,7 +1,5 @@
-#include <string>
 #ifndef _WIN32
 
-#include "logger.hpp"
 #include "network_base.hpp"
 #include "network_linux.hpp"
 
@@ -9,6 +7,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 // #include <asm-generic/socket.h>
 #include <arpa/inet.h>
@@ -21,7 +20,7 @@ NetworkAdpeterLinux::NetworkAdpeterLinux(uint32_t port, uint32_t timeoutVal) {
 	// Create Socket
 	socketUDP = socket(AF_INET, SOCK_DGRAM, 0);
 	if (socketUDP == -1) {
-		logger.error(contextInfo, "Cannot Create Socket!");
+		spdlog::error("Cannot Create Socket!");
 		exit(-1);
 	}
 
@@ -48,11 +47,11 @@ NetworkAdpeterLinux::NetworkAdpeterLinux(uint32_t port, uint32_t timeoutVal) {
 	// Bind Port
 	if (bind(socketUDP, reinterpret_cast<struct sockaddr *>(&addr), addrLen) ==
 		-1) {
-		logger.error(contextInfo, "Fail to Bind Socket to Port ", port);
+		spdlog::error("Fail to Bind Socket to Port {}", port);
 		close(socketUDP);
 		exit(-1);
 	}
-	logger.info(__FUNCTION__, "inited.");
+	spdlog::info("{} inited.", __FUNCTION__);
 }
 
 NetworkAdpeterLinux::~NetworkAdpeterLinux() { close(socketUDP); }
@@ -90,10 +89,9 @@ auto NetworkAdpeterLinux::recvMessage(char *data, size_t limit, size_t *size,
 		siz = recvfrom(socketUDP, dat, limit * 4 / 3, 0,
 					   reinterpret_cast<sockaddr *>(&src), &srcLen);
 	} while (siz == -1 &&
-			 (logger.warn(contextInfo, "Time Out at Recving Data!"),
-			  ++timeoutCnt < 3));
+			 (spdlog::warn("Time Out at Recving Data!"), ++timeoutCnt < 3));
 	if (timeoutCnt >= 3) {
-		logger.error(contextInfo, "Cannot RecvMessage (aka Timeout)!");
+		spdlog::error("Cannot RecvMessage (aka Timeout)!");
 		return -1;
 	}
 	dat[siz] = '\0';

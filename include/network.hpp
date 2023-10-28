@@ -1,7 +1,8 @@
 #ifndef _NETWORK_HPP_
 #define _NETWORK_HPP_
 
-#include "logger.hpp"
+#include "spdlog/spdlog.h"
+
 #include "network_base.hpp"
 #include "network_linux.hpp"
 #include "network_windows.hpp"
@@ -93,7 +94,7 @@ class NetworkServer : public NetworkHoster {
 	explicit NetworkServer(uint32_t port = defaultPort,
 						   uint32_t timeoutVal = 0)
 		: NetworkHoster(port, timeoutVal), UserProc(DefaultUserProc) {
-		logger.info(__FUNCTION__, " inited, Port Opened at ", port, ".");
+		spdlog::info("{} inited, Port Opened at {}.", __FUNCTION__, port);
 	}
 
 	void setUserProc(auto (*UserProcT)(NetworkMessagePackage)->uint32_t) {
@@ -122,7 +123,7 @@ class NetworkClient : public NetworkHoster {
 	explicit NetworkClient(uint32_t port = defaultPort,
 						   uint32_t timeoutVal = 2000000)
 		: NetworkHoster(port, timeoutVal) {
-		logger.info(__FUNCTION__, " inited, Port Opened at ", port, ".");
+		spdlog::info("{} inited, Port Opened at {}.", __FUNCTION__, port);
 	}
 
 	void connect(const char *server, uint32_t port);

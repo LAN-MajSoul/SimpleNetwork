@@ -1,6 +1,8 @@
 #ifndef _NETWORK_LINUX_HPP_
 #define _NETWORK_LINUX_HPP_
 
+#include "spdlog/spdlog.h"
+
 #include "network_base.hpp"
 
 #ifndef _WIN32
