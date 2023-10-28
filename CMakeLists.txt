@@ -10,7 +10,7 @@ endif()
 include(CTest)
 enable_testing()
 
-include_directories(./include)
+include_directories(./include/SimpleNetwork)
 
 # aux_source_directory(. sources)
 # aux_source_directory(./source/ sources)
